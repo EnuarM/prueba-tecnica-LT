@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   TokenGenerator,
@@ -7,11 +7,25 @@ import {
 
 @Injectable()
 export class JwtTokenGenerator extends TokenGenerator {
+  private readonly logger = new Logger(JwtTokenGenerator.name);
+
   constructor(private readonly jwtService: JwtService) {
     super();
   }
 
   generate(payload: TokenPayload): string {
-    return this.jwtService.sign(payload);
+    try {
+      const token = this.jwtService.sign(payload);
+      this.logger.log(
+        `JWT generated successfully for identSerialNum ${payload.govIssueIdent.identSerialNum}`,
+      );
+      return token;
+    } catch (error) {
+      this.logger.error(
+        `JWT generation failed: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
   }
 }
