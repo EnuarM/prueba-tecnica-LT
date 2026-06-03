@@ -1,0 +1,8 @@
+export enum ProductRequestStatus {
+  CREATED = 'CREATED',
+  IN_REVIEW = 'IN_REVIEW',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  COMPLETED = 'COMPLETED',
+  ABANDONED = 'ABANDONED',
+}
