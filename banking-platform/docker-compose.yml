@@ -33,23 +33,26 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4200}
-      CUSTOMER_SERVICE_URL: http://customer-service:3001
+      CUSTOMER_SERVICE_URL: http://authentication-service:3001
       PRODUCT_REQUESTS_URL: http://product-requests:3002
     depends_on:
-      - customer-service
+      - authentication-service
       - product-requests
 
-  customer-service:
+  authentication-service:
     build:
-      context: ./apps/backend/customer-service
+      context: ./apps/backend/authentication-service
       dockerfile: Dockerfile
-    container_name: banking-customer-service
+    container_name: banking-authentication-service
     restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
       NODE_ENV: production
       PORT: 3001
+      JWT_SECRET: super-secret-key-for-dev-only-change-in-production-32chars
+      JWT_EXPIRES_IN: 1h
+      MULESOFT_BASE_URL: https://df55ea6a-84ee-4da6-b351-218b8bdaf47e.mock.pstmn.io
 
   product-requests:
     build:

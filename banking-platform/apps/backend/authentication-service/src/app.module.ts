@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { AuthModule } from './auth.module';
 
 @Module({
   imports: [
@@ -13,10 +12,12 @@ import { AppService } from './app.service';
           .valid('development', 'production', 'test')
           .default('development'),
         PORT: Joi.number().default(3001),
+        JWT_SECRET: Joi.string().min(32).required(),
+        JWT_EXPIRES_IN: Joi.string().default('1h'),
+        MULESOFT_BASE_URL: Joi.string().uri().required(),
       }),
     }),
+    AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
