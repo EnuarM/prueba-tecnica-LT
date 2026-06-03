@@ -27,13 +27,17 @@ export class MulesoftAuthAdapter extends CoreBankingAuthPort {
   ): Promise<MulesoftUserData> {
     const url = `${this.baseUrl}/authentication-management/v1/user`;
 
-    this.logger.log(`Sending authentication request to core banking for docNumber ${docNumber}`);
+    this.logger.log(
+      `Sending authentication request to core banking for docNumber ${docNumber}`,
+    );
 
     try {
       const response = await firstValueFrom(
         this.httpService.post<MulesoftUserData>(url, { docNumber, password }),
       );
-      this.logger.log(`Core banking authentication succeeded for docNumber ${docNumber}`);
+      this.logger.log(
+        `Core banking authentication succeeded for docNumber ${docNumber}`,
+      );
       return response.data;
     } catch (error) {
       this.logger.warn(

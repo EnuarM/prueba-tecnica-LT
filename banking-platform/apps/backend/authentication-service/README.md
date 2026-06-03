@@ -1,98 +1,139 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# authentication-service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Microservicio de autenticación de la plataforma bancaria. Actúa como proxy entre el cliente y el core bancario (Mulesoft), validando credenciales y emitiendo tokens de acceso.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Responsabilidad
 
-## Description
+Recibe las credenciales del usuario, las valida contra el core bancario a través de Mulesoft, y retorna un JWT firmado que contiene la información del usuario. No gestiona sesiones ni almacena estado.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Arquitectura
 
-## Project setup
+El servicio sigue **Clean Architecture** con separación estricta de capas:
 
-```bash
-$ npm install
+```
+src/
+├── domain/
+│   └── exceptions/          # InvalidCredentialsException
+├── application/
+│   ├── ports/               # CoreBankingAuthPort, TokenGenerator (contratos)
+│   ├── use-cases/           # LoginUseCase (lógica de negocio)
+│   └── dtos/                # LoginRequestDto, LoginResponseDto
+├── infrastructure/
+│   ├── mulesoft/            # MulesoftAuthAdapter (implementa CoreBankingAuthPort)
+│   └── auth/                # JwtTokenGenerator (implementa TokenGenerator)
+└── presentation/
+    ├── controllers/         # AuthController
+    └── filters/             # DomainExceptionFilter
 ```
 
-## Compile and run the project
+Las dependencias siempre apuntan hacia adentro: infraestructura depende de aplicación, aplicación depende de dominio. Los puertos (interfaces abstractas) desacoplan las capas externas de la lógica de negocio.
 
-```bash
-# development
-$ npm run start
+## Endpoint
 
-# watch mode
-$ npm run start:dev
+### `POST /auth/login`
 
-# production mode
-$ npm run start:prod
+**Request:**
+```json
+{
+  "docNumber": "12345678",
+  "password": "secret"
+}
 ```
 
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+**Response `200 OK`:**
+```json
+{
+  "accessToken": "<JWT>"
+}
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+El JWT contiene en su payload la información completa retornada por Mulesoft:
+```json
+{
+  "govIssueIdent": {
+    "govIssueIdentType": "CC",
+    "identSerialNum": "12345678"
+  },
+  "personName": {
+    "fullName": "John Doe",
+    "lastAuthInfo": { "lastTrnDt": "2024-01-01T00:00:00" }
+  }
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+**Response `401 Unauthorized`** (credenciales inválidas):
+```json
+{
+  "statusCode": 401,
+  "error": "Unauthorized",
+  "message": "Invalid document number or password"
+}
+```
 
-## Resources
+## Variables de entorno
 
-Check out a few resources that may come in handy when working with NestJS:
+| Variable | Descripción | Requerida |
+|---|---|---|
+| `PORT` | Puerto del servidor | No (default 3000) |
+| `NODE_ENV` | Entorno (`development` / `production`) | No |
+| `JWT_SECRET` | Clave de firma del JWT (mín. 32 caracteres) | Sí |
+| `JWT_EXPIRES_IN` | Duración del token (ej. `1h`, `7d`) | Sí |
+| `MULESOFT_BASE_URL` | URL base del mock de Mulesoft | Sí |
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Ejecución local
 
-## Support
+```bash
+# Instalar dependencias
+npm install
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Desarrollo con hot-reload
+npm run start:dev
 
-## Stay in touch
+# Producción
+npm run start:prod
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Ejecución con Docker
 
-## License
+```bash
+# Desde la raíz del monorepo
+docker compose up authentication-service
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Tests
+
+```bash
+# Unitarios
+npm run test
+
+# Unitarios con cobertura
+npm run test:cov
+
+# Watch mode
+npm run test:watch
+```
+
+Los tests cubren todas las capas: dominio, casos de uso, filtros, adaptadores de infraestructura y controlador. Cada unidad se prueba de forma aislada mediante mocks.
+
+## Observabilidad
+
+Los logs se emiten a través del `ConsoleLogger` de NestJS:
+
+- **`NODE_ENV=development`**: logs con colores en consola
+- **`NODE_ENV=production`**: logs en formato JSON (compatible con Grafana/Loki)
+
+Cada operación relevante (llamada a Mulesoft, generación de JWT, errores) produce una entrada de log con el identificador del usuario involucrado.
+
+## Decisión técnica: JWT vs OAuth 2.0
+
+Para esta prueba técnica se implementó autenticación **JWT simple**: el cliente envía credenciales, el servicio las valida contra el core bancario y retorna un `accessToken`.
+
+Esta decisión es adecuada para el alcance de la prueba, pero en un escenario productivo con múltiples clientes (aplicaciones móviles, portales web, integraciones de terceros), la evolución natural sería hacia **OAuth 2.0**, por las siguientes razones:
+
+- **Delegación de acceso controlada**: OAuth permite que un cliente acceda a recursos en nombre del usuario sin exponer sus credenciales, mediante `grant_type` y `scopes` bien definidos.
+- **Gestión de clientes**: cada aplicación consumidora se registra con `client_id` y `client_secret`, permitiendo auditoría y revocación granular por cliente.
+- **Refresh tokens**: la sesión se puede renovar sin solicitar credenciales nuevamente, mejorando la experiencia del usuario.
+- **Estándar interoperable**: clientes, gateways y herramientas de seguridad ya saben cómo manejar tokens OAuth, reduciendo fricciones de integración.
+- **Separación de responsabilidades**: el Authorization Server (este microservicio) se independiza completamente del Resource Server (los servicios que consumen el token).
+
+La migración implicaría: agregar campos `grant_type`, `client_id` y `client_secret` al request; una respuesta conforme a RFC 6749 (`token_type`, `expires_in`, `refresh_token`); un store persistente para refresh tokens y una tabla de clientes registrados.
