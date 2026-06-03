@@ -7,12 +7,12 @@ import * as Joi from 'joi';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // disponible en todos los módulos sin re-importar
+      isGlobal: true,
       validationSchema: Joi.object({
         NODE_ENV: Joi.string()
           .valid('development', 'production', 'test')
           .default('development'),
-        PORT: Joi.number().default(3001),
+        PORT: Joi.number().default(3002),
         MONGODB_URI: Joi.string().required(),
         JWT_SECRET: Joi.string().min(32).required(),
         JWT_EXPIRATION: Joi.string().default('1h'),
@@ -25,7 +25,7 @@ import * as Joi from 'joi';
         THROTTLE_LIMIT: Joi.number().default(100),
       }),
       validationOptions: {
-        abortEarly: false, // muestra TODOS los errores, no solo el primero
+        abortEarly: false,
       },
     }),
     ThrottlerModule.forRootAsync({
@@ -38,7 +38,7 @@ import * as Joi from 'joi';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard, // rate limiting global
+      useClass: ThrottlerGuard,
     },
   ],
 })
