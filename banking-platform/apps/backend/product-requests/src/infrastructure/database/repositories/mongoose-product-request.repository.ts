@@ -40,11 +40,6 @@ export class MongooseProductRequestRepository extends ProductRequestRepository {
     return doc ? this.toEntity(doc) : null;
   }
 
-  async findAll(): Promise<ProductRequest[]> {
-    const docs = await this.model.find().exec();
-    return docs.map((doc) => this.toEntity(doc));
-  }
-
   async findByClientDocNumber(docNumber: string): Promise<ProductRequest[]> {
     const docs = await this.model.find({ clientDocNumber: docNumber }).exec();
     return docs.map((doc) => this.toEntity(doc));

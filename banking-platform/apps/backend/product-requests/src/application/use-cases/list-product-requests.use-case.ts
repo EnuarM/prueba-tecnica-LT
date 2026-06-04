@@ -10,10 +10,7 @@ export class ListProductRequestsUseCase {
     private readonly repository: ProductRequestRepository,
   ) {}
 
-  async execute(clientDocNumber?: string): Promise<ProductRequest[]> {
-    if (clientDocNumber) {
-      return this.repository.findByClientDocNumber(clientDocNumber);
-    }
-    return this.repository.findAll();
+  async execute(clientDocNumber: string): Promise<ProductRequest[]> {
+    return this.repository.findByClientDocNumber(clientDocNumber);
   }
 }
