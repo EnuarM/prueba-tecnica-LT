@@ -101,8 +101,10 @@ export default function AuthForm() {
             placeholder="Ingrese el número de identificación"
             required
             type="text"
+            inputMode="numeric"
+            maxLength={10}
             value={docNumber}
-            onChange={(e) => setDocNumber(e.target.value)}
+            onChange={(e) => setDocNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
           />
         </div>
 
@@ -115,8 +117,9 @@ export default function AuthForm() {
             placeholder="••••••••"
             required
             type="password"
+            maxLength={15}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 15))}
           />
         </div>
 

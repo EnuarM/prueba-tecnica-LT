@@ -1,29 +1,29 @@
 export default function Footer() {
   return (
-    <section className="mt-auto py-12 px-margin-desktop border-t border-outline-variant bg-surface-bright">
+    <section className="mt-auto py-12 px-margin-desktop border-t border-outline-variant bg-primary-container">
       <div className="max-w-container mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
         <div className="flex flex-col gap-2">
-          <span className="text-label-md text-primary">Entorno Técnico CoreBank</span>
-          <span className="text-label-sm text-on-surface-variant">
+          <span className="text-label-md text-white">Entorno Técnico CoreBank</span>
+          <span className="text-label-sm text-white/70">
             © 2026 CoreBank Institucional. Todos los derechos reservados.
           </span>
         </div>
 
         <div className="flex gap-8">
           <a
-            className="text-label-sm text-on-surface-variant hover:text-secondary transition-colors"
+            className="text-label-sm text-white/70 hover:text-white transition-colors"
             href="#"
           >
             Política de Privacidad
           </a>
           <a
-            className="text-label-sm text-on-surface-variant hover:text-secondary transition-colors"
+            className="text-label-sm text-white/70 hover:text-white transition-colors"
             href="#"
           >
             Auditoría de Seguridad
           </a>
           <a
-            className="text-label-sm text-on-surface-variant hover:text-secondary transition-colors"
+            className="text-label-sm text-white/70 hover:text-white transition-colors"
             href="#"
           >
             Estado del Servicio

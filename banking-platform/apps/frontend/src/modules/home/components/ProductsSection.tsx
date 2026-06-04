@@ -18,7 +18,7 @@ export default function ProductsSection() {
         <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6 auto-rows-[240px]">
           <ProductCard
             variant="standard"
-            colSpanClass="md:col-span-3 lg:col-span-4"
+            colSpanClass="md:col-span-2 lg:col-span-4"
             icon="person_pin_circle"
             iconBgClass="bg-primary-fixed"
             iconColorClass="text-primary"
@@ -27,7 +27,7 @@ export default function ProductsSection() {
           />
           <ProductCard
             variant="standard"
-            colSpanClass="md:col-span-3 lg:col-span-4"
+            colSpanClass="md:col-span-2 lg:col-span-4"
             icon="savings"
             iconBgClass="bg-secondary-fixed"
             iconColorClass="text-secondary"
@@ -36,7 +36,7 @@ export default function ProductsSection() {
           />
           <ProductCard
             variant="standard"
-            colSpanClass="md:col-span-6 lg:col-span-4"
+            colSpanClass="md:col-span-2 lg:col-span-4"
             icon="home_work"
             iconBgClass="bg-tertiary-fixed"
             iconColorClass="text-on-tertiary-fixed-variant"
@@ -44,19 +44,22 @@ export default function ProductsSection() {
             description="Estructuras de financiamiento inmobiliario a largo plazo optimizadas para construcción de patrimonio estable."
           />
           <ProductCard
-            variant="featured"
-            colSpanClass="md:col-span-3 lg:col-span-6"
+            variant="standard"
+            colSpanClass="md:col-span-3 lg:col-span-4 lg:col-start-3"
             icon="credit_card"
+            iconBgClass="bg-primary-fixed"
+            iconColorClass="text-primary"
             title="Tarjeta de Crédito"
             description="Nuestras tarjetas premium ofrecen poder adquisitivo global con recompensas y cobertura de seguro integral."
-            decorativeIcon="payments"
           />
           <ProductCard
-            variant="horizontal"
-            colSpanClass="md:col-span-3 lg:col-span-6"
-            icon="factory"
-            title="Crédito Productivo"
-            description="Financiamiento especializado para escalamiento operativo, adquisición de maquinaria y avance industrial."
+            variant="standard"
+            colSpanClass="md:col-span-3 lg:col-span-4 lg:col-start-7"
+            icon="monitoring"
+            iconBgClass="bg-secondary-fixed"
+            iconColorClass="text-secondary"
+            title="Fondo de Inversión"
+            description="Instrumentos de inversión colectiva para maximizar rendimientos con diversificación de cartera y gestión profesional."
           />
         </div>
       </div>
