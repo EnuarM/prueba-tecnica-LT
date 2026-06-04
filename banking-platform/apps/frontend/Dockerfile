@@ -1,25 +1,30 @@
-# Stage 1 — install dependencies
-FROM node:20-alpine AS deps
+# ---------- base ----------
+FROM node:20-alpine AS base
 WORKDIR /app
+RUN npm config set strict-ssl false
+
+# ---------- deps ----------
+FROM base AS deps
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# Stage 2 — build
-FROM node:20-alpine AS builder
-WORKDIR /app
+# ---------- build ----------
+FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# NEXT_PUBLIC_* variables must be available at build time
 ARG NEXT_PUBLIC_GRAPHQL_URL=http://localhost:3000/graphql
 ENV NEXT_PUBLIC_GRAPHQL_URL=$NEXT_PUBLIC_GRAPHQL_URL
-RUN npm run build
+ENV NEXT_TELEMETRY_DISABLED=1
+# NODE_TLS_REJECT_UNAUTHORIZED=0 covers SWC binary download (uses Node.js fetch)
+RUN NODE_TLS_REJECT_UNAUTHORIZED=0 npm run build
 
-# Stage 3 — runtime (standalone output)
+# ---------- production ----------
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Next.js standalone copies only the required files
+# standalone output — only ships what's needed (no node_modules in runner)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public

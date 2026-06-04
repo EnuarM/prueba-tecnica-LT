@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Font CSS variables — defined here instead of next/font/google
+   so no network requests are made at build time. */
+:root {
+  --font-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
