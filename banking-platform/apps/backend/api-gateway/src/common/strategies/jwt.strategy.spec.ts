@@ -2,8 +2,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtStrategy, JwtPayload } from './jwt.strategy';
 
 jest.mock('@nestjs/passport', () => ({
-  PassportStrategy: (Strategy: new (...args: unknown[]) => unknown) => {
-    return class extends (Strategy as new (...args: unknown[]) => unknown) {
+  PassportStrategy: (Strategy: new (...args: unknown[]) => object) => {
+    return class extends Strategy {
       constructor(...args: unknown[]) {
         super(...args);
       }
