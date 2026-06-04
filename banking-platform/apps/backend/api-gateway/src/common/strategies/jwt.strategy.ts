@@ -13,7 +13,7 @@ export interface JwtPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
-    const secret = configService.getOrThrow<string>('JWT_SECRET');
+    const secret = Buffer.from(configService.getOrThrow<string>('JWT_SECRET'), 'base64');
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,

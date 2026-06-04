@@ -48,7 +48,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3001
-      JWT_SECRET: super-secret-key-for-dev-only-change-in-production-32chars
+      JWT_SECRET: c3VwZXItc2VjcmV0LWtleS1mb3ItZGV2LW9ubHktY2hhbmdlLWluLXByb2R1Y3Rpb24tMzJjaGFycw==
       JWT_EXPIRES_IN: 1h
       MULESOFT_BASE_URL: https://df55ea6a-84ee-4da6-b351-218b8bdaf47e.mock.pstmn.io
 

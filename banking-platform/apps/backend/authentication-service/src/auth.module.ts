@@ -17,7 +17,7 @@ import { TOKEN_GENERATOR, CORE_BANKING_AUTH } from './auth.constants';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET'),
+        secret: Buffer.from(config.get<string>('JWT_SECRET')!, 'base64'),
         signOptions: {
           expiresIn: config.get<string>('JWT_EXPIRES_IN', '1h') as never,
         },
