@@ -1,8 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useMutation } from '@apollo/client/react';
+import { LOGIN_MUTATION } from '@/lib/graphql';
 
-type FormState = 'idle' | 'loading' | 'success';
+type FormState = 'idle' | 'loading' | 'success' | 'error';
+
+interface LoginMutationResult {
+  login: { accessToken: string };
+}
+
+interface LoginMutationVariables {
+  input: { docNumber: string; password: string };
+}
 
 const DOCUMENT_TYPES = [
   { value: 'cc',       label: 'Cédula de Ciudadanía' },
@@ -13,20 +23,45 @@ const DOCUMENT_TYPES = [
 
 export default function AuthForm() {
   const [formState, setFormState] = useState<FormState>('idle');
+  const [docNumber, setDocNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const [loginMutation] = useMutation<LoginMutationResult, LoginMutationVariables>(
+    LOGIN_MUTATION,
+    {
+      onCompleted(data) {
+        // Almacena el token de forma segura en memoria de sesión
+        sessionStorage.setItem('accessToken', data.login.accessToken);
+        setFormState('success');
+        setTimeout(() => setFormState('idle'), 2500);
+      },
+      onError(error) {
+        const msg =
+          (error as { graphQLErrors?: Array<{ message: string }> }).graphQLErrors?.[0]?.message ??
+          'No fue posible autenticar. Verifique sus credenciales.';
+        setErrorMessage(msg);
+        setFormState('error');
+        setTimeout(() => setFormState('idle'), 3000);
+      },
+    },
+  );
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (formState !== 'idle') return;
+    if (formState !== 'idle' && formState !== 'error') return;
 
+    setErrorMessage('');
     setFormState('loading');
-    setTimeout(() => {
-      setFormState('success');
-      setTimeout(() => setFormState('idle'), 2000);
-    }, 1500);
+    loginMutation({ variables: { input: { docNumber, password } } });
   };
 
   const buttonBg =
-    formState === 'success' ? 'bg-on-tertiary-container' : 'bg-primary';
+    formState === 'success'
+      ? 'bg-on-tertiary-container'
+      : formState === 'error'
+        ? 'bg-error'
+        : 'bg-primary';
 
   return (
     <div
@@ -61,7 +96,10 @@ export default function AuthForm() {
           <input
             className="w-full p-3 bg-surface-container-low border border-outline-variant rounded-lg focus:border-secondary focus:ring-1 focus:ring-secondary transition-all text-body-md outline-none"
             placeholder="Ingrese el número de identificación"
+            required
             type="text"
+            value={docNumber}
+            onChange={(e) => setDocNumber(e.target.value)}
           />
         </div>
 
@@ -72,16 +110,26 @@ export default function AuthForm() {
           <input
             className="w-full p-3 bg-surface-container-low border border-outline-variant rounded-lg focus:border-secondary focus:ring-1 focus:ring-secondary transition-all text-body-md outline-none"
             placeholder="••••••••"
+            required
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
+        {formState === 'error' && (
+          <p className="text-body-sm text-error flex items-center gap-1">
+            <span className="material-symbols-outlined text-[16px]">error</span>
+            {errorMessage}
+          </p>
+        )}
+
         <button
           className={`w-full py-4 ${buttonBg} text-white text-label-md rounded-xl hover:opacity-90 transition-all flex justify-center items-center gap-2 disabled:opacity-70`}
-          disabled={formState !== 'idle'}
+          disabled={formState === 'loading' || formState === 'success'}
           type="submit"
         >
-          {formState === 'idle' && (
+          {(formState === 'idle' || formState === 'error') && (
             <>
               <span className="material-symbols-outlined text-[20px]">lock</span>
               Autenticar Sesión
