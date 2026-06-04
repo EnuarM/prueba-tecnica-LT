@@ -30,8 +30,8 @@ services:
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4200}
-      CUSTOMER_SERVICE_URL: http://authentication-service:3001
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8000}
+      AUTH_SERVICE_URL: http://authentication-service:3001
       PRODUCT_REQUESTS_URL: http://product-requests:3002
     depends_on:
       - authentication-service

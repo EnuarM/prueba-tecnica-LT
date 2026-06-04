@@ -10,7 +10,7 @@ export class AuthService {
 
   constructor(private readonly configService: ConfigService) {
     this.authServiceUrl = this.configService.get<string>(
-      'CUSTOMER_SERVICE_URL',
+      'AUTH_SERVICE_URL',
     )!;
   }
 
