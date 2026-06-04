@@ -28,7 +28,7 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: c3VwZXItc2VjcmV0LWtleS1mb3ItZGV2LW9ubHktY2hhbmdlLWluLXByb2R1Y3Rpb24tMzJjaGFycw==
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8000}
       AUTH_SERVICE_URL: http://authentication-service:3001
