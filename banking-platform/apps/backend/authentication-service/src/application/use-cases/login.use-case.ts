@@ -25,6 +25,10 @@ export class LoginUseCase {
 
     const token = this.tokenGenerator.generate(userData);
 
-    return LoginResponseDto.create(token);
+    return LoginResponseDto.create(token, {
+      fullName: userData.personName.fullName,
+      docType: userData.govIssueIdent.govIssueIdentType,
+      docNumber: userData.govIssueIdent.identSerialNum,
+    });
   }
 }

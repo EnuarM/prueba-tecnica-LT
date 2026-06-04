@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useMutation } from '@apollo/client/react';
 import { LOGIN_MUTATION } from '@/lib/graphql';
+import { useAuth, UserProfile } from '@/lib/auth-context';
 
 type FormState = 'idle' | 'loading' | 'success' | 'error';
 
 interface LoginMutationResult {
-  login: { accessToken: string };
+  login: { user: UserProfile };
 }
 
 interface LoginMutationVariables {
@@ -22,6 +24,8 @@ const DOCUMENT_TYPES = [
 ];
 
 export default function AuthForm() {
+  const { setUser } = useAuth();
+  const router = useRouter();
   const [formState, setFormState] = useState<FormState>('idle');
   const [docNumber, setDocNumber] = useState('');
   const [password, setPassword] = useState('');
@@ -31,10 +35,9 @@ export default function AuthForm() {
     LOGIN_MUTATION,
     {
       onCompleted(data) {
-        // Almacena el token de forma segura en memoria de sesión
-        sessionStorage.setItem('accessToken', data.login.accessToken);
+        setUser(data.login.user);
         setFormState('success');
-        setTimeout(() => setFormState('idle'), 2500);
+        setTimeout(() => router.push('/dashboard/new-application'), 800);
       },
       onError(error) {
         const msg =

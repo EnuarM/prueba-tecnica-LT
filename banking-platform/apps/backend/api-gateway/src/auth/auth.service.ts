@@ -2,7 +2,12 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError } from 'axios';
 import { LoginInput } from './dto/login.input';
-import { AuthResponse } from './types/auth-response.type';
+import { UserProfile } from './types/auth-response.type';
+
+export interface AuthServiceResult {
+  accessToken: string;
+  user: UserProfile;
+}
 
 @Injectable()
 export class AuthService {
@@ -14,13 +19,13 @@ export class AuthService {
     )!;
   }
 
-  async login(input: LoginInput): Promise<AuthResponse> {
+  async login(input: LoginInput): Promise<AuthServiceResult> {
     try {
-      const response = await axios.post<{ accessToken: string }>(
+      const response = await axios.post<AuthServiceResult>(
         `${this.authServiceUrl}/auth/login`,
         { docNumber: input.docNumber, password: input.password },
       );
-      return { accessToken: response.data.accessToken };
+      return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
       if (axiosError.response?.status === 401) {
