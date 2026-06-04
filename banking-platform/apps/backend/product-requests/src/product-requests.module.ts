@@ -11,6 +11,7 @@ import { GetProductRequestUseCase } from './application/use-cases/get-product-re
 import { ListProductRequestsUseCase } from './application/use-cases/list-product-requests.use-case';
 import { UpdateProductRequestStatusUseCase } from './application/use-cases/update-product-request-status.use-case';
 import { DeleteProductRequestUseCase } from './application/use-cases/delete-product-request.use-case';
+import { DatabaseSeederService } from './database/database-seeder.service';
 import { PRODUCT_REQUEST_REPOSITORY } from './product-requests.constants';
 
 @Module({
@@ -33,6 +34,7 @@ import { PRODUCT_REQUEST_REPOSITORY } from './product-requests.constants';
     ListProductRequestsUseCase,
     UpdateProductRequestStatusUseCase,
     DeleteProductRequestUseCase,
+    DatabaseSeederService,
   ],
 })
 export class ProductRequestsModule {}
