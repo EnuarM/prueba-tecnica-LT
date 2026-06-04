@@ -60,6 +60,7 @@ export default function HistorialPage() {
   const { data, loading, error, refetch } = useQuery<{ productRequests: ProductRequest[] }>(PRODUCT_REQUESTS_QUERY, {
     variables: { clientDocNumber: user?.docNumber ?? '' },
     skip: !user?.docNumber,
+    fetchPolicy: 'cache-and-network',
   });
 
   const [updateStatus] = useMutation(UPDATE_PRODUCT_REQUEST_STATUS_MUTATION);

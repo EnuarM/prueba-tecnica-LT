@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useApolloClient } from '@apollo/client/react';
 import { useAuth } from '@/lib/auth-context';
 
 interface NavItem {
@@ -19,8 +20,10 @@ export default function SideNavBar() {
   const pathname = usePathname();
   const router = useRouter();
   const { setUser } = useAuth();
+  const apolloClient = useApolloClient();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await apolloClient.clearStore();
     setUser(null);
     router.push('/');
   };

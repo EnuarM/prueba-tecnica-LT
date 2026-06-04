@@ -1,8 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SideNavBar from './SideNavBar';
 
 const mockPush = jest.fn();
 const mockSetUser = jest.fn();
+const mockClearStore = jest.fn().mockResolvedValue(undefined);
 
 jest.mock('next/navigation', () => ({
   usePathname: () => '/dashboard/new-application',
@@ -11,6 +12,10 @@ jest.mock('next/navigation', () => ({
 
 jest.mock('@/lib/auth-context', () => ({
   useAuth: () => ({ setUser: mockSetUser }),
+}));
+
+jest.mock('@apollo/client/react', () => ({
+  useApolloClient: () => ({ clearStore: mockClearStore }),
 }));
 
 jest.mock('next/link', () => {
@@ -45,9 +50,12 @@ describe('SideNavBar', () => {
     expect(screen.getByRole('button', { name: /Cerrar Sesión/i })).toBeInTheDocument();
   });
 
-  it('calls setUser(null) and redirects to / on logout', () => {
+  it('clears Apollo cache, calls setUser(null) and redirects to / on logout', async () => {
     fireEvent.click(screen.getByRole('button', { name: /Cerrar Sesión/i }));
-    expect(mockSetUser).toHaveBeenCalledWith(null);
-    expect(mockPush).toHaveBeenCalledWith('/');
+    await waitFor(() => {
+      expect(mockClearStore).toHaveBeenCalledTimes(1);
+      expect(mockSetUser).toHaveBeenCalledWith(null);
+      expect(mockPush).toHaveBeenCalledWith('/');
+    });
   });
 });
