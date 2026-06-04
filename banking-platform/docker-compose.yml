@@ -19,7 +19,7 @@ services:
 
   gateway:
     build:
-      context: ./apps/backend/gateway
+      context: ./apps/backend/api-gateway
       dockerfile: Dockerfile
     container_name: banking-gateway
     restart: unless-stopped

@@ -1,10 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { APP_GUARD } from '@nestjs/core';
 import * as Joi from 'joi';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { join } from 'path';
+import { HealthResolver } from './health.resolver';
+import { GqlThrottlerGuard } from './common/guards/gql-throttler.guard';
+import { CommonModule } from './common/common.module';
+import { AuthModule } from './auth/auth.module';
+import { ProductRequestsModule } from './product-requests/product-requests.module';
 
 @Module({
   imports: [
@@ -26,11 +32,25 @@ import { AppService } from './app.service';
       { ttl: 1000, limit: 10 },
       { ttl: 60000, limit: 100 },
     ]),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      sortSchema: true,
+      playground: false,
+      introspection: true,
+      context: ({ req, res }: { req: Request; res: Response }) => ({
+        req,
+        res,
+      }),
+    }),
+    CommonModule,
+    AuthModule,
+    ProductRequestsModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: GqlThrottlerGuard },
+    HealthResolver,
   ],
 })
 export class AppModule {}

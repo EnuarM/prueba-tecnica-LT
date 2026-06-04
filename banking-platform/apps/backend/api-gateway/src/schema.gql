@@ -1,0 +1,70 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthResponse {
+  accessToken: String!
+}
+
+input CreateProductRequestInput {
+  clientDocNumber: String!
+  clientName: String!
+  productType: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input LoginInput {
+  docNumber: String!
+  password: String!
+}
+
+type Mutation {
+  """Create a new product request"""
+  createProductRequest(input: CreateProductRequestInput!): ProductRequestType!
+
+  """Delete a product request"""
+  deleteProductRequest(id: ID!): Boolean!
+
+  """Authenticate with docNumber and password"""
+  login(input: LoginInput!): AuthResponse!
+
+  """Update the status of a product request"""
+  updateProductRequestStatus(id: ID!, input: UpdateProductRequestStatusInput!): ProductRequestType!
+}
+
+enum ProductRequestStatus {
+  ABANDONED
+  APPROVED
+  COMPLETED
+  CREATED
+  IN_REVIEW
+  REJECTED
+}
+
+type ProductRequestType {
+  clientDocNumber: String!
+  clientName: String!
+  createdAt: DateTime!
+  id: ID!
+  productType: String!
+  status: ProductRequestStatus!
+  updatedAt: DateTime!
+}
+
+type Query {
+  health: String!
+
+  """Get a single product request by ID"""
+  productRequest(id: ID!): ProductRequestType!
+
+  """List product requests for a client"""
+  productRequests(clientDocNumber: String!): [ProductRequestType!]!
+}
+
+input UpdateProductRequestStatusInput {
+  status: ProductRequestStatus!
+}
