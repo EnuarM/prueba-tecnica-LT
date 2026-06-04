@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { ProductType } from '../../domain/enums/product-type.enum';
 
 export class CreateProductRequestDto {
   @IsString()
@@ -9,7 +10,8 @@ export class CreateProductRequestDto {
   @IsNotEmpty()
   clientName: string;
 
-  @IsString()
-  @IsNotEmpty()
-  productType: string;
+  @IsEnum(ProductType, {
+    message: `productType must be one of: ${Object.values(ProductType).join(', ')}`,
+  })
+  productType: ProductType;
 }

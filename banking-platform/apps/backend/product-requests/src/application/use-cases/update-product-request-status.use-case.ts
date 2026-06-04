@@ -29,9 +29,6 @@ export class UpdateProductRequestStatusUseCase {
       data.newStatus,
     );
 
-    productRequest.status = data.newStatus;
-    productRequest.updatedAt = new Date();
-
-    return this.repository.update(productRequest);
+    return this.repository.update(data.id, data.newStatus);
   }
 }

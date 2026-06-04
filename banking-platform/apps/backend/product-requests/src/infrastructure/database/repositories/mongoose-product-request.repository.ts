@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ProductRequest } from '../../../domain/entities/product-request.entity';
+import { ProductRequestStatus } from '../../../domain/enums/product-request-status.enum';
 import { ProductRequestRepository } from '../../../domain/repositories/product-request.repository';
 import {
   ProductRequestDocument,
@@ -26,8 +27,6 @@ export class MongooseProductRequestRepository extends ProductRequestRepository {
       clientName: productRequest.clientName,
       productType: productRequest.productType,
       status: productRequest.status,
-      createdAt: productRequest.createdAt,
-      updatedAt: productRequest.updatedAt,
     });
 
     await doc.save();
@@ -45,17 +44,20 @@ export class MongooseProductRequestRepository extends ProductRequestRepository {
     return docs.map((doc) => this.toEntity(doc));
   }
 
-  async update(productRequest: ProductRequest): Promise<ProductRequest> {
+  async update(
+    id: string,
+    status: ProductRequestStatus,
+  ): Promise<ProductRequest> {
     const doc = await this.model
-      .findByIdAndUpdate(
-        productRequest.id,
-        { status: productRequest.status, updatedAt: productRequest.updatedAt },
-        { new: true },
-      )
+      .findByIdAndUpdate(id, { status }, { new: true })
       .exec();
 
-    this.logger.log(`ProductRequest updated with id ${productRequest.id}`);
-    return this.toEntity(doc!);
+    if (!doc) {
+      throw new Error(`ProductRequest with id '${id}' not found`);
+    }
+
+    this.logger.log(`ProductRequest updated with id ${id}`);
+    return this.toEntity(doc);
   }
 
   async delete(id: string): Promise<void> {

@@ -1,10 +1,11 @@
 import { ProductRequestStatus } from '../enums/product-request-status.enum';
+import { ProductType } from '../enums/product-type.enum';
 
 export class ProductRequest {
   id: string;
   clientDocNumber: string;
   clientName: string;
-  productType: string;
+  productType: ProductType;
   status: ProductRequestStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -13,17 +14,17 @@ export class ProductRequest {
     id: string;
     clientDocNumber: string;
     clientName: string;
-    productType: string;
+    productType: ProductType;
     status: ProductRequestStatus;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
   }) {
     this.id = params.id;
     this.clientDocNumber = params.clientDocNumber;
     this.clientName = params.clientName;
     this.productType = params.productType;
     this.status = params.status;
-    this.createdAt = params.createdAt;
-    this.updatedAt = params.updatedAt;
+    this.createdAt = params.createdAt!;
+    this.updatedAt = params.updatedAt!;
   }
 }

@@ -1,11 +1,12 @@
 import { ProductRequest } from '../../domain/entities/product-request.entity';
 import { ProductRequestStatus } from '../../domain/enums/product-request-status.enum';
+import { ProductType } from '../../domain/enums/product-type.enum';
 
 export class ProductRequestResponseDto {
   id: string;
   clientDocNumber: string;
   clientName: string;
-  productType: string;
+  productType: ProductType;
   status: ProductRequestStatus;
   createdAt: Date;
   updatedAt: Date;
