@@ -1,6 +1,6 @@
 /**
  * Seed script: inserts sample product requests for the mock client
- * used in the authentication-service (CC 12345678 / John Doe).
+ * used in the authentication-service Postman mock (CC 1110571450).
  *
  * Usage:
  *   npx ts-node -r tsconfig-paths/register src/database/seed.ts
@@ -36,7 +36,7 @@ const ProductRequestModel = mongoose.model(
   ProductRequestSchema,
 );
 
-const CLIENT_DOC_NUMBER = '12345678';
+const CLIENT_DOC_NUMBER = '1110571450';
 const CLIENT_NAME = 'John Doe';
 
 const seeds = [
