@@ -9,7 +9,7 @@ async function bootstrap() {
 
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cookieParser());
-  const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3001')
+  const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:8000')
     .split(',')
     .map((o) => o.trim());
   app.enableCors({
