@@ -162,16 +162,6 @@ Los defectos se registran con: pasos de reproducción, entorno, evidencia (log /
 - **Trazabilidad**: cada caso de prueba está vinculado a un criterio de aceptación o a un riesgo identificado. Nada se prueba "porque sí".
 - **Feedback loop rápido**: el pipeline CI debe dar resultado en < 5 minutos para pruebas unitarias y de integración. Los desarrolladores no esperan al QA para saber si su código funciona.
 
-### Métricas de calidad seguidas
-
-| Métrica | Objetivo |
-|---|---|
-| Cobertura de código (dominio + app) | ≥ 80 % |
-| Defect escape rate (defectos encontrados en producción / total) | < 10 % |
-| Test pass rate en CI | ≥ 95 % en rama principal |
-| Tiempo medio de resolución de defecto Alto | ≤ 1 sprint |
-
----
 
 ## 8. Herramientas
 
@@ -181,68 +171,93 @@ Los defectos se registran con: pasos de reproducción, entorno, evidencia (log /
 | Mocks de módulos | `jest.mock()`, `createMock()` de `@golevelup/ts-jest` |
 | E2E frontend | Playwright |
 | Cobertura | Jest `--coverage` + umbral en `jest.config.ts` |
-| CI | GitHub Actions (pipeline por PR + pipeline de release) |
-| Gestión de defectos | GitHub Issues con labels de severidad |
 
 ---
 
 ## 9. Mejora de procesos QA con Inteligencia Artificial
 
-### Propuesta: GitHub Copilot + Agentes de IA como acelerador del equipo QA
+### 9.1 Postman AI Agent — Automatización asistida de colecciones
 
-La incorporación de IA en el proceso de QA no reemplaza el criterio del ingeniero; reduce el tiempo en tareas repetitivas de bajo valor (scaffolding de tests, análisis de cobertura, triaje de defectos) y libera al equipo para concentrarse en análisis de riesgo, diseño de casos de borde y revisión de lógica de negocio.
+Postman incorpora un agente de IA conversacional que permite generar, mantener y ejecutar colecciones de prueba sin escribir scripts manualmente. Su aplicación concreta en este proyecto:
 
-#### Herramientas propuestas
+**Generación de colecciones desde el esquema GraphQL**
 
-| Herramienta | Rol en el proceso QA |
-|---|---|
-| **GitHub Copilot (modo agente)** | Generación de suites de test a partir de criterios de aceptación; análisis de cobertura de ramas; refactoring de tests legacy |
-| **Copilot Chat en PR review** | Identificación automática de paths no cubiertos al revisar un PR; sugerencias de casos de borde basadas en el diff |
-| **CodiumAI / Qodo** | Generación de unit tests para funciones nuevas directamente en el editor; análisis de mutaciones |
-| **Playwright AI (codegen + AI locator)** | Grabación y mantenimiento de tests E2E con localizadores semánticos resistentes a cambios de UI |
+El agente puede importar el schema GraphQL del api-gateway (`schema.gql`) e inferir automáticamente queries, mutations y variables de prueba para cada operación expuesta. Reduce de horas a minutos la creación inicial de la colección de smoke tests.
 
-#### Aplicación concreta a este proyecto
+**Generación de test scripts desde lenguaje natural**
 
-**1. Generación de tests para la máquina de estados**
+Dentro de cada request, el agente genera los `pm.test()` describiendo la expectativa en texto:
 
-El QA describe en lenguaje natural el comportamiento esperado de `BankingRequest` y Copilot genera el esqueleto de los casos de prueba. El QA valida y ajusta los valores límite.
+```
+"Verificar que la respuesta sea 201 y que el campo status del body sea CREATED"
+```
 
-```typescript
-// Prompt al agente:
-// "Genera tests Jest para BankingRequest.abandon().
-//  La solicitud puede abandonarse solo en estado CREATED o IN_REVIEW.
-//  En cualquier otro estado debe lanzar InvalidStateTransitionException."
-
-// Copilot genera la estructura; el QA revisa y complementa con datos reales
-describe('BankingRequest.abandon()', () => {
-  it.each(['CREATED', 'IN_REVIEW'])('allows abandonment from %s', (status) => { ... });
-  it.each(['APPROVED', 'REJECTED', 'COMPLETED'])('throws from %s', (status) => { ... });
+Resultado generado automáticamente:
+```javascript
+pm.test("Status 201 and body.status is CREATED", () => {
+    pm.response.to.have.status(201);
+    pm.expect(pm.response.json().data.createRequest.status).to.eql("CREATED");
 });
 ```
 
-**2. Análisis de cobertura de criterios de aceptación**
+**Mantenimiento ante cambios de contrato**
 
-En cada PR, Copilot Chat analiza los criterios de aceptación de la HU asociada y los compara contra los tests incluidos en el diff, señalando cuáles criterios no tienen cobertura explícita.
-
-**3. Mantenimiento de tests E2E con Playwright AI**
-
-Cuando el equipo frontend cambia un componente (ej. el formulario de login), los localizadores de los tests E2E pueden romperse. Playwright AI sugiere localizadores semánticos (`getByRole`, `getByLabel`) que son más resistentes a cambios de estructura que los selectores CSS.
-
-**4. Triaje asistido de defectos**
-
-Un agente con acceso a los logs de CI puede clasificar automáticamente los fallos de test como: test flaky (fallo intermitente), regresión (nuevo fallo en código existente) o defecto nuevo. Esto reduce el tiempo que el QA invierte en diferenciar ruido de defectos reales.
-
-#### Criterios de adopción
-
-La IA se adopta con las siguientes restricciones:
-
-1. **El QA siempre revisa y aprueba** los tests generados — no se hace merge de tests no revisados.
-2. **Los tests deben ser comprensibles**: si Copilot genera un test que el equipo no puede leer y entender en 30 segundos, se descarta.
-3. **No reemplaza el diseño de casos de prueba de riesgo alto**: la máquina de estados, la lógica de autorización y el flujo de transacciones se diseñan manualmente porque requieren criterio de negocio.
-4. **Métricas antes y después**: se mide el tiempo de escritura de tests por sprint antes y después de incorporar IA, para validar que el cambio aporta valor real.
+Cuando un campo cambia de nombre o un tipo se modifica en el schema, el agente detecta las discrepancias entre el schema importado y los tests existentes, y propone las correcciones. Esto evita que los tests queden desactualizados silenciosamente.
 
 ---
 
-*Documento versionado junto al código — refleja el estado de calidad del proyecto en cada release.*
+### 9.2 Flujos E2E automatizados con Postman Flows
+
+Postman Flows permite encadenar requests con lógica condicional de forma visual. Los flujos críticos identificados en la sección 2.3 (E2E-01 a E2E-07) se implementan como flows reutilizables:
+
+```
+[Login] → extraer access_token
+    → [Crear solicitud] con token → extraer requestId
+        → [Revisar solicitud] → [Aprobar solicitud]
+            → [Verificar estado COMPLETED]
+```
+
+Cada nodo del flow puede tener assertions propias. El resultado es un flujo de negocio completo ejecutable con un solo clic o desde CLI con Newman.
+
+---
+
+### 9.3 Ejecución en CI con Newman
+
+Las colecciones generadas y mantenidas en Postman se exportan y ejecutan en el pipeline con Newman:
+
+```bash
+newman run collection.json \
+  --environment env.staging.json \
+  --reporters cli,junit \
+  --reporter-junit-export results/postman-results.xml
+```
+
+El reporte JUnit se publica en el pipeline (GitHub Actions, Jenkins) junto con los resultados de Jest, consolidando toda la evidencia de pruebas en un solo artefacto por build.
+
+---
+
+### 9.4 Generación de datos de prueba con IA
+
+El agente de Postman puede generar conjuntos de datos dinámicos (data-driven testing) para casos como:
+
+- Múltiples combinaciones de `productType` y `amount` para validar reglas de negocio
+- Datos de clientes con distintos `documentType` para verificar validaciones del gateway
+- Escenarios de borde: montos negativos, strings vacíos, campos opcionales ausentes
+
+Esto reemplaza la creación manual de archivos CSV de datos de prueba y garantiza mayor cobertura de variantes con menos esfuerzo.
+
+---
+
+### 9.5 Estrategia de gestión de datos de prueba
+
+Uno de los problemas recurrentes que más impacta la productividad del área QA es la dependencia de datos inconsistentes, incompletos o deteriorados en los ambientes de prueba. El equipo pierde tiempo valioso de pruebas bloqueado por precondiciones de datos que no están listas, en lugar de ejecutando casos y encontrando defectos.
+
+**El problema concreto:**
+- Datos de clientes o solicitudes en estado inconsistente entre servicios
+- Ambientes de staging con datos "vivos" modificados por otras ejecuciones previas
+- Ausencia de un proceso formal para preparar y restaurar el estado inicial antes de cada ciclo de pruebas
+
+**Impacto esperado:** reducir el tiempo perdido en preparación y corrección de datos de prueba, convirtiendo ese tiempo en ejecución efectiva de casos y cobertura real de escenarios de negocio. Busqueda de integracion con equipo core para el tratamiento de data, buscando un estandar.
+
 
 

@@ -4,13 +4,69 @@ Plataforma bancaria para gestión de solicitudes de productos financieros, desar
 
 ---
 
+## Estructura del proyecto
+
+```
+banking-platform/
+├── apps/
+│   ├── backend/
+│   │   ├── api-gateway/            # Punto de entrada público — GraphQL federation, auth JWT, rate limiting
+│   │   ├── authentication-service/ # Emisión y validación de JWT, gestión de usuarios
+│   │   └── product-requests/       # Dominio principal — CRUD de solicitudes, máquina de estados, Clean Architecture
+│   └── frontend/                   # Next.js 15 — UI bancaria, Apollo Client, autenticación SSR
+├── docs/
+│   ├── qa-strategy/qa.md           # Estrategia de QA y matriz de pruebas
+│   └── user-stories/stories.md     # Historias de usuario y criterios de aceptación
+└── docker-compose.yml
+```
+
+### Backend — READMEs por servicio
+
+Cada servicio tiene su propio README con detalles de arquitectura, variables de entorno, endpoints y comandos de desarrollo:
+
+- [api-gateway](banking-platform/apps/backend/api-gateway/README.md) — GraphQL gateway, Apollo Federation, JWT guard, ThrottlerModule
+- [authentication-service](banking-platform/apps/backend/authentication-service/README.md) — Registro, login, emisión de tokens, Clean Architecture
+- [product-requests](banking-platform/apps/backend/product-requests/README.md) — Solicitudes de productos, máquina de estados, integración Core Banking (mock Mulesoft)
+
+### Frontend — README
+
+- [frontend](banking-platform/apps/frontend/README.md) — Next.js 15, Apollo Client, módulos por dominio, cobertura Jest
+
+---
+
+## Levantar todo el stack
+
+### Prerrequisito
+- Docker Desktop corriendo
+
+### Un solo comando
+
+```bash
+cd banking-platform
+docker compose up -d
+```
+
+Esto levanta en orden correcto según las dependencias declaradas en `docker-compose.yml`:
+MongoDB → authentication-service → product-requests → api-gateway → frontend
+
+Para detener:
+```bash
+docker compose down
+```
+
+> Para desarrollo local, configuración de variables de entorno, ejecución de tests y detalles de cada servicio, ver el README correspondiente en la carpeta de cada app.
+
+---
+
 ## Stack tecnológico
 
 | Capa | Tecnología |
 |---|---|
-| Backend | NestJS (latest) + TypeScript 5.7 strict mode |
+| API Gateway | NestJS + Apollo Federation + GraphQL |
+| Microservicios | NestJS + TypeScript 5.7 strict mode |
 | Base de datos | MongoDB 7 (Mongoose ODM) |
-| Testing | Jest + Supertest |
+| Frontend | Next.js 15 + React 19 + Tailwind CSS |
+| Testing | Jest + Supertest + React Testing Library |
 | Contenedores | Docker + Docker Compose |
 | Seguridad | Helmet, JWT, ThrottlerModule, ValidationPipe |
 
@@ -18,42 +74,18 @@ Plataforma bancaria para gestión de solicitudes de productos financieros, desar
 
 ## Arquitectura: Backend orientado a microservicios
 
-### Estructura de carpetas
+### Los tres servicios
 
 ```
 banking-platform/
 ├── apps/
 │   └── backend/
-│       ├── gateway/              # Puerto 3000 — API pública, auth, agregación
-│       ├── customer-service/     # Puerto 3001 — Datos de clientes
-│       └── product-requests/     # Puerto 3002 — Solicitudes de productos (núcleo)
+│       ├── api-gateway/            # Puerto 3000 — API pública, auth, agregación GraphQL
+│       ├── authentication-service/ # Puerto 3001 — Autenticación JWT
+│       └── product-requests/       # Puerto 3002 — Solicitudes de productos (núcleo)
 ├── docs/
 └── docker-compose.yml
 ```
-
-### Los tres servicios
-
-#### `gateway` (puerto 3000)
-Punto de entrada único para todos los clientes. Responsabilidades:
-- Autenticación JWT (login, validación de token)
-- Routing y agregación de respuestas desde los servicios internos
-- Rate limiting global (Helmet + ThrottlerModule)
-- Exposición de la API versionada (`/api/v1/...`)
-
-#### `customer-service` (puerto 3001)
-Servicio de datos de clientes. Responsabilidades:
-- Exponer información básica del cliente (`nombre`, `apellido`, `tipoDoc`, `numDoc`)
-- Datos mockeados en esta fase (sin base de datos propia)
-- En producción: integración con el core bancario o CRM
-
-#### `product-requests` (puerto 3002)
-Núcleo de negocio. Implementa Clean Architecture completa. Responsabilidades:
-- CRUD completo de solicitudes de productos bancarios
-- Máquina de estados para el ciclo de vida de cada solicitud
-- Integración con Core Banking (mock de Mulesoft)
-- Persistencia en MongoDB
-
----
 
 ## Por qué esta arquitectura
 
@@ -142,50 +174,28 @@ Las transiciones inválidas lanzan `InvalidStatusTransitionException` (excepció
 
 ---
 
-## Cómo ejecutar
+## Propuestas de liderazgo técnico
 
-### Prerrequisitos
-- Docker Desktop
-- Node.js 20+
-- `npm i -g @nestjs/cli`
+> Este apartado recoge propuestas que van más allá del código entregado: decisiones de proceso, cultura de equipo y evolución técnica que asumiría como líder técnico.
 
-### Levantar infraestructura
-```bash
-docker-compose up -d
-```
 
-### Ejecutar cada servicio
-```bash
-# Terminal 1
-cd apps/backend/gateway && npm run start:dev
+### 1. Estrategia de branching y revisión de código
 
-# Terminal 2
-cd apps/backend/customer-service && npm run start:dev
+Definir una convención de ramas clara (`main`, `develop`, `feature/*`, `hotfix/*`) con reglas de protección en `main` y `develop`: PR obligatorio, al menos una aprobación del LT o arquitecto, y pipeline CI en verde como requisito de merge. El LT no aprueba cada PR individualmente, pero sí revisa patrones recurrentes, define guías de estilo en el repositorio y actúa como desempate en decisiones de arquitectura que emergen durante la revisión.
 
-# Terminal 3
-cd apps/backend/product-requests && npm run start:dev
-```
+### 2. Observabilidad y monitoreo en producción
 
-### Tests
-```bash
-# Desde cada servicio
-npm run test          # unitarios
-npm run test:e2e      # end-to-end
-npm run test:cov      # cobertura
-```
+Definir umbrales de alerta con severidad (warning / critical) y canales de notificación diferenciados. El objetivo no es que el LT revise los dashboards manualmente, sino que el sistema avise proactivamente antes de que un problema impacte al usuario.
 
-### Swagger (solo en desarrollo)
-- Gateway: http://localhost:3000/api/docs
-- Product Requests: http://localhost:3002/api/docs
+### 3. Gestión de deuda técnica
 
----
+Institucionalizar la deuda técnica como un ítem de backlog con el mismo nivel de visibilidad que las historias de usuario. En cada sprint se reserva una capacidad fija (típicamente 15–20 %) para abordar deuda priorizada. La deuda se registra con impacto concreto (ej. "este módulo no tiene cobertura de tests, bloquea cambios rápidos") y no como lista de deseos técnicos. La transversalidad actual del equipo se aprovecha para que los mismos desarrolladores que detectan la deuda propongan y ejecuten la solución.
 
-## Decisiones de arquitectura (ADR)
+### 4. Onboarding técnico y documentación viva
 
-| ID | Decisión | Razón |
-|---|---|---|
-| ADR-001 | UUID string como `_id` en MongoDB | Evita exponer ObjectId internos, facilita portabilidad y tests deterministas |
-| ADR-002 | HTTP REST síncrono entre servicios | Simplicidad para la prueba; en producción se evaluaría message broker (RabbitMQ/Kafka) para operaciones asíncronas |
-| ADR-003 | JWT solo en gateway | Los servicios internos confían en la red privada Docker; no duplicar lógica de auth |
-| ADR-004 | Mock de Mulesoft en infrastructure | Permite testear el dominio sin dependencia externa; el contrato del adapter es la interfaz, no la implementación |
-| ADR-005 | `commonjs` + `moduleResolution: node` | Compatibilidad garantizada con el ecosistema NestJS/Jest; evita el error TS5103 de `nodenext` con decorators |
+La documentación que no se actualiza con el código deja de ser útil. La propuesta es tratar los READMEs, ADRs y diagramas de arquitectura como artefactos de primera clase: el DoD de cada historia incluye actualizar la documentación afectada. Para nuevos integrantes, definir un camino de onboarding de dos semanas con hitos concretos (leer arquitectura → levantar el stack → resolver un ticket pequeño → pair programming con el equipo).
+
+### 5. Seguridad continua (DevSecOps)
+
+El LT mantiene un checklist OWASP mínimo como criterio de salida de cada release, y promueve la cultura de que la seguridad es responsabilidad del equipo completo, no de un área separada.
+
